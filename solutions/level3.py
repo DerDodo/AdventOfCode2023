@@ -40,31 +40,8 @@ def level3() -> Tuple[int, int]:
     schematic = parse_input_file()
     numbers = find_all_engine_parts(schematic)
     sum_engine_parts, gears = process_numbers(schematic, numbers)
-    total_gear_ratio = 0
-    for gear in gears.values():
-        if len(gear) == 2:
-            total_gear_ratio += gear[0] * gear[1]
+    total_gear_ratio = calc_total_gear_ratio(gears)
     return sum_engine_parts, total_gear_ratio
-
-
-def process_numbers(schematic: list[str], numbers: list[EnginePart]) -> Tuple[int, dict[int, list[int]]]:
-    sum_engine_parts = 0
-    gears = dict()
-    for number in numbers:
-        neighbors = number.get_neighbors(len(schematic[0]), len(schematic))
-        is_enine_part = False
-        for neighbor in neighbors:
-            value = schematic[neighbor[1]][neighbor[0]]
-            if not value.isdigit() and value != ".":
-                is_enine_part = True
-            if value == "*":
-                coordinate_id = get_coordinate_id(neighbor[0], neighbor[1], len(schematic[0]))
-                if coordinate_id not in gears:
-                    gears[coordinate_id] = []
-                gears[coordinate_id].append(number.value)
-        if is_enine_part:
-            sum_engine_parts += number.value
-    return sum_engine_parts, gears
 
 
 def find_all_engine_parts(schematic: list[str]) -> list[EnginePart]:
@@ -91,8 +68,44 @@ def find_all_engine_parts(schematic: list[str]) -> list[EnginePart]:
     return engine_parts
 
 
+def process_numbers(schematic: list[str], numbers: list[EnginePart]) -> Tuple[int, dict[int, list[int]]]:
+    sum_engine_parts = 0
+    gears = find_all_gears(schematic)
+    for number in numbers:
+        neighbors = number.get_neighbors(len(schematic[0]), len(schematic))
+        is_enine_part = False
+        for neighbor in neighbors:
+            value = schematic[neighbor[1]][neighbor[0]]
+            if not value.isdigit() and value != ".":
+                is_enine_part = True
+            if value == "*":
+                coordinate_id = get_coordinate_id(neighbor[0], neighbor[1], len(schematic[0]))
+                gears[coordinate_id].append(number.value)
+        if is_enine_part:
+            sum_engine_parts += number.value
+    return sum_engine_parts, gears
+
+
+def find_all_gears(schematic):
+    gears = dict()
+    for y in range(0, len(schematic)):
+        for x in range(0, len(schematic[0])):
+            if schematic[y][x] == "*":
+                coordinate_id = get_coordinate_id(x, y, len(schematic[0]))
+                gears[coordinate_id] = []
+    return gears
+
+
 def get_coordinate_id(x: int, y: int, width: int) -> int:
     return y * width + x
+
+
+def calc_total_gear_ratio(gears):
+    total_gear_ratio = 0
+    for gear in gears.values():
+        if len(gear) == 2:
+            total_gear_ratio += gear[0] * gear[1]
+    return total_gear_ratio
 
 
 if __name__ == '__main__':
