@@ -51,5 +51,5 @@ if __name__ == '__main__':
     print("Engine part sum: " + str(level4()))
 
 
-def test_level3():
+def test_level4():
     assert (13, 30) == level4()
