@@ -32,61 +32,6 @@ class SeedRange:
         return self.start + self.length - 1
 
 
-def sort_range_map(source: list[Range]) -> list[Range]:
-    return sorted(source, key=lambda r: r.source, reverse=False)
-
-
-def parse_input_file() -> Tuple[list[int], list[list[Range]]]:
-    lines = read_input_file(5)
-    seeds = list(map(int, lines[0].split(" ")[1:]))
-    range_maps = list()
-    current_map = list()
-    for line in lines[3:]:
-        if line == "":
-            range_maps.append(sort_range_map(current_map))
-            current_map = list()
-        elif line[0].isdigit():
-            parts = line.split(" ")
-            current_map.append(Range(int(parts[0]), int(parts[1]), int(parts[2])))
-    range_maps.append(sort_range_map(current_map))
-    return seeds, range_maps
-
-
-def transform_seeds_with_ranges(source_list: list[int], ranges: list[Range]):
-    results = list()
-    for source_number in source_list:
-        found = False
-        for test_range in ranges:
-            if test_range.source <= source_number < test_range.source + test_range.length:
-                results.append(test_range.destination + source_number - test_range.source)
-                found = True
-                break
-        if not found:
-            results.append(source_number)
-    return results
-
-
-def transform_ranges_with_ranges(source_ranges: list[SeedRange], transform_ranges: list[Range]):
-    results = list()
-    for source_range in source_ranges:
-        transformation_start = source_range.start
-        transformation_end = source_range.get_last()
-        for transform_range in transform_ranges:
-            if transform_range.source <= transformation_start <= transform_range.get_last():
-                if transformation_end <= transform_range.get_last():
-                    # fully covered
-                    new_start = transform_range.destination + transformation_start - transform_range.source
-                    results.append(SeedRange(new_start, transformation_end - transformation_start + 1, source_range.is_planted))
-                    break
-                else:
-                    # partly covered
-                    new_start = transform_range.destination + transformation_start - transform_range.source
-                    results.append(SeedRange(new_start, transform_range.get_last() - transformation_start + 1, source_range.is_planted))
-                    transformation_start = transform_range.get_last() + 1
-
-    return sorted(results, key=lambda r: r.start)
-
-
 def level5() -> Tuple[int, int]:
     seeds, range_maps = parse_input_file()
     results = copy.deepcopy(seeds)
@@ -109,6 +54,40 @@ def level5() -> Tuple[int, int]:
             break
 
     return min_location_part1, min_location_part2
+
+
+def parse_input_file() -> Tuple[list[int], list[list[Range]]]:
+    lines = read_input_file(5)
+    seeds = list(map(int, lines[0].split(" ")[1:]))
+    range_maps = list()
+    current_map = list()
+    for line in lines[3:]:
+        if line == "":
+            range_maps.append(sort_range_map(current_map))
+            current_map = list()
+        elif line[0].isdigit():
+            parts = line.split(" ")
+            current_map.append(Range(int(parts[0]), int(parts[1]), int(parts[2])))
+    range_maps.append(sort_range_map(current_map))
+    return seeds, range_maps
+
+
+def sort_range_map(source: list[Range]) -> list[Range]:
+    return sorted(source, key=lambda r: r.source, reverse=False)
+
+
+def transform_seeds_with_ranges(source_list: list[int], ranges: list[Range]):
+    results = list()
+    for source_number in source_list:
+        found = False
+        for test_range in ranges:
+            if test_range.source <= source_number < test_range.source + test_range.length:
+                results.append(test_range.destination + source_number - test_range.source)
+                found = True
+                break
+        if not found:
+            results.append(source_number)
+    return results
 
 
 def fill_ranges(range_maps: list[list[Range]], max_number: int) -> list[list[Range]]:
@@ -144,6 +123,27 @@ def construct_seed_ranges(seeds: list[int]) -> list[SeedRange]:
     seed_ranges.extend(seed_range_additions)
     seed_ranges.sort(key=lambda r: r.start)
     return seed_ranges
+
+
+def transform_ranges_with_ranges(source_ranges: list[SeedRange], transform_ranges: list[Range]):
+    results = list()
+    for source_range in source_ranges:
+        transformation_start = source_range.start
+        transformation_end = source_range.get_last()
+        for transform_range in transform_ranges:
+            if transform_range.source <= transformation_start <= transform_range.get_last():
+                if transformation_end <= transform_range.get_last():
+                    # fully covered
+                    new_start = transform_range.destination + transformation_start - transform_range.source
+                    results.append(SeedRange(new_start, transformation_end - transformation_start + 1, source_range.is_planted))
+                    break
+                else:
+                    # partly covered
+                    new_start = transform_range.destination + transformation_start - transform_range.source
+                    results.append(SeedRange(new_start, transform_range.get_last() - transformation_start + 1, source_range.is_planted))
+                    transformation_start = transform_range.get_last() + 1
+
+    return sorted(results, key=lambda r: r.start)
 
 
 if __name__ == '__main__':
