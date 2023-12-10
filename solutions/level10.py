@@ -3,8 +3,12 @@ from enum import Enum
 from util.file_util import read_input_file_id
 
 
-class CantStepException(Exception): pass
-class InvalidDirectionsException(Exception): pass
+class CantStepException(Exception):
+    pass
+
+
+class InvalidDirectionsException(Exception):
+    pass
 
 
 class LoopDirection(Enum):
