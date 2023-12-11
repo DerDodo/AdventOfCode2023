@@ -23,7 +23,7 @@ def extrapolate(values: list[int]) -> Tuple[int, int]:
         next_difference = [check_line[idx + 1] - number for idx, number in enumerate(check_line[0:-1])]
         differences.append(next_difference)
     future = sum(map(lambda line: line[-1], differences))
-    past = sum([(number if idx % 2 == 0 else -number) for idx, number in enumerate(map(lambda line: line[0], differences))])
+    past = sum([(num if idx % 2 == 0 else -num) for idx, num in enumerate(map(lambda line: line[0], differences))])
     return future, past
 
 

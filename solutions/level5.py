@@ -128,20 +128,24 @@ def construct_seed_ranges(seeds: list[int]) -> list[SeedRange]:
 def transform_ranges_with_ranges(source_ranges: list[SeedRange], transform_ranges: list[Range]):
     results = list()
     for source_range in source_ranges:
-        transformation_start = source_range.start
-        transformation_end = source_range.get_last()
+        transform_start = source_range.start
+        transform_end = source_range.get_last()
         for transform_range in transform_ranges:
-            if transform_range.source <= transformation_start <= transform_range.get_last():
-                if transformation_end <= transform_range.get_last():
+            if transform_range.source <= transform_start <= transform_range.get_last():
+                if transform_end <= transform_range.get_last():
                     # fully covered
-                    new_start = transform_range.destination + transformation_start - transform_range.source
-                    results.append(SeedRange(new_start, transformation_end - transformation_start + 1, source_range.is_planted))
+                    new_start = transform_range.destination + transform_start - transform_range.source
+                    results.append(SeedRange(new_start,
+                                             transform_end - transform_start + 1,
+                                             source_range.is_planted))
                     break
                 else:
                     # partly covered
-                    new_start = transform_range.destination + transformation_start - transform_range.source
-                    results.append(SeedRange(new_start, transform_range.get_last() - transformation_start + 1, source_range.is_planted))
-                    transformation_start = transform_range.get_last() + 1
+                    new_start = transform_range.destination + transform_start - transform_range.source
+                    results.append(SeedRange(new_start,
+                                             transform_range.get_last() - transform_start + 1,
+                                             source_range.is_planted))
+                    transform_start = transform_range.get_last() + 1
 
     return sorted(results, key=lambda r: r.start)
 
