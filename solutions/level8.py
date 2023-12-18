@@ -1,6 +1,6 @@
 from math import lcm
 
-from util.file_util import read_input_file_id
+from util.file_util import read_input_file
 
 
 class Map:
@@ -21,7 +21,7 @@ class Map:
         return self.nodes[start][direction]
 
 
-def level8_1(file_id: int) -> int:
+def level8_1(file_id: int = 0) -> int:
     node_map = parse_input_file(file_id)
     position = "AAA"
 
@@ -32,7 +32,7 @@ def level8_1(file_id: int) -> int:
     return -1
 
 
-def level8_2(file_id: int) -> int:
+def level8_2(file_id: int = 0) -> int:
     node_map = parse_input_file(file_id)
     positions = list(filter(lambda node: node[-1] == "A", node_map.nodes.keys()))
     z_cycles = list(map(lambda position: walk_ghost_until_z(node_map, position), positions))
@@ -49,16 +49,16 @@ def walk_ghost_until_z(node_map: Map, start: str) -> int:
 
 
 def parse_input_file(file_id: int) -> Map:
-    lines = read_input_file_id(8, file_id)
+    lines = read_input_file(8, file_id)
     return Map(lines)
 
 
 if __name__ == '__main__':
-    print("Human steps: " + str(level8_1(3)))
-    print("Ghost steps: " + str(level8_2(3)))
+    print("Human steps: " + str(level8_1()))
+    print("Ghost steps: " + str(level8_2()))
 
 
 def test_level8():
-    assert 2 == level8_1(0)
+    assert 2 == level8_1()
     assert 6 == level8_1(1)
     assert 6 == level8_2(2)

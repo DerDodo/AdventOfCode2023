@@ -1,6 +1,6 @@
 from enum import Enum
 
-from util.file_util import read_input_file_id
+from util.file_util import read_input_file
 
 
 class CantStepException(Exception):
@@ -246,7 +246,7 @@ class FillLabyrinth:
         return sum(map(lambda line: line.count(self.__inside_tile), self.area))
 
 
-def level10(file_id: int) -> tuple[int, int]:
+def level10(file_id: int = 0) -> tuple[int, int]:
     labyrinth = parse_input_file(file_id)
     loop_tiles = calc_loop(labyrinth)
     fill_labyrinth = FillLabyrinth(labyrinth, loop_tiles)
@@ -254,7 +254,7 @@ def level10(file_id: int) -> tuple[int, int]:
 
 
 def parse_input_file(file_id: int) -> Labyrinth:
-    lines = read_input_file_id(10, file_id)
+    lines = read_input_file(10, file_id)
     return Labyrinth(lines)
 
 
@@ -283,12 +283,11 @@ def find_start(labyrinth: Labyrinth) -> tuple[int, int]:
 
 
 if __name__ == '__main__':
-    print("Longest distance, tiles inside: " + str(level10(4)))
+    print("Longest distance, tiles inside: " + str(level10(0)))
 
 
 def test_level10():
-    assert (4, 1) == level10(0)
+    assert (4, 1) == level10()
     assert (8, 1) == level10(1)
     assert (23, 4) == level10(2)
     assert (70, 8) == level10(3)
-    assert (6768, 351) == level10(4)

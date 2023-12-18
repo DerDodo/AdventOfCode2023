@@ -9,7 +9,6 @@ def level13(with_smudge: bool) -> int:
     for field in fields:
         rows = get_num_reflected_rows(field, with_smudge)
         cols = get_num_reflected_rows(transpose(field), with_smudge)
-        print(f"Field {i}: {rows} rows, {cols}: cols")
         total_sum += rows * 100 + cols
         i += 1
 
