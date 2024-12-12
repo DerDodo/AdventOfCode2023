@@ -1,4 +1,4 @@
-from util.file_util import read_input_file_id
+from util.file_util import read_input_file
 
 
 def process_line(line: str) -> int:
@@ -40,7 +40,7 @@ def is_text_number(line: str, idx: int) -> int | None:
 
 
 def parse_input_file(file: int) -> list[str]:
-    return read_input_file_id(1, file)
+    return read_input_file(1, file)
 
 
 def level1(consider_text: bool, file: int = 0) -> int:
@@ -52,10 +52,10 @@ def level1(consider_text: bool, file: int = 0) -> int:
 
 
 if __name__ == '__main__':
-    print("Coordinate sum: " + str(level1(False, 2)))
-    print("Coordinate sum with text: " + str(level1(True, 2)))
+    print("Coordinate sum: " + str(level1(False,)))
+    print("Coordinate sum with text: " + str(level1(True)))
 
 
 def test_level1():
-    assert 142 == level1(False, 0)
+    assert 142 == level1(False)
     assert 281 == level1(True, 1)

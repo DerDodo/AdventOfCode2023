@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Tuple
 
-from util.file_util import read_input_file_id, read_input_file
+from util.file_util import read_input_file, read_input_file
 
 
 class Color(Enum):

@@ -1,2 +1,4 @@
 /.idea
 /venv
+/input-files/prod/
+!/input-files/prod/level0.txt
