@@ -131,7 +131,10 @@ class PartsRange:
         return new_parts_range
 
     def calc_valid_parts(self) -> int:
-        return (self.x_end - self.x_start + 1) * (self.m_end - self.m_start + 1) * (self.a_end - self.a_start + 1) * (self.s_end - self.s_start + 1)
+        return ((self.x_end - self.x_start + 1) *
+                (self.m_end - self.m_start + 1) *
+                (self.a_end - self.a_start + 1) *
+                (self.s_end - self.s_start + 1))
 
     def split(self, action: Action) -> tuple:
         if_true = self.copy()
