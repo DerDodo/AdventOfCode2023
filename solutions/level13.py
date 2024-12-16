@@ -1,5 +1,5 @@
+from util.data_util import transpose
 from util.file_util import read_input_file
-from util.math_util import transpose
 
 
 def level13(with_smudge: bool) -> int:

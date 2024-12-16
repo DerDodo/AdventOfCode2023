@@ -2,8 +2,9 @@ from collections import defaultdict
 from enum import Enum
 from math import sqrt
 
+from util.data_util import create_2d_list
 from util.file_util import read_input_file
-from util.math_util import Direction, Position, Area, create_2d_list, is_turn_right, is_turn_left, clamp
+from util.math_util import Direction, Position, Area, is_turn_right, is_turn_left, clamp
 from util.run_util import RunTimer
 
 direction_translate = {
