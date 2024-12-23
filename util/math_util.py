@@ -1,6 +1,8 @@
 import math
 from enum import Enum
 
+from util.data_util import create_2d_list
+
 
 def count_digits(n) -> int:
     if n == 0:
@@ -45,6 +47,18 @@ class Direction(Enum):
             return Direction.West
         else:
             raise ValueError(f"Invalid direction arrow '{arrow}'")
+
+    def to_arrow(self) -> str:
+        if self == Direction.North:
+            return "^"
+        elif self == Direction.East:
+            return ">"
+        elif self == Direction.South:
+            return "v"
+        elif self == Direction.West:
+            return "<"
+        else:
+            raise ValueError(f"Invalid direction arrow '{self}'")
 
     def turn_left_90(self):
         match self:
@@ -107,6 +121,19 @@ class Direction(Enum):
             self.y = value
         else:
             raise IndexError(f"Invalid index {index}")
+
+    def __neg__(self):
+        return Direction((-self.x, -self.y))
+
+    def __lt__(self, other):
+        return self.hash_value < other.hash_value
+
+NEWSDirections = [
+    Direction.North,
+    Direction.East,
+    Direction.South,
+    Direction.West
+]
 
 
 def is_turn_right(old: Direction, new: Direction) -> bool:
@@ -300,6 +327,18 @@ class Position:
         if isinstance(other, tuple) and isinstance(other[0], int) and isinstance(other[1], int):
             return Position(self.x & other[0], self.y & other[1])
         raise TypeError(f"{other} is no Position, int, or tuple[int, int]")
+
+    def __lt__(self, other):
+        return len(self) < len(other)
+
+    def __len__(self):
+        return self.x * self.y
+
+    def __abs__(self):
+        return Position(abs(self.x), abs(self.y))
+
+    def get_orthogonal_length(self) -> int:
+        return abs(self.x) + abs(self.y)
 
     def copy(self):
         return Position(self.x, self.y)
