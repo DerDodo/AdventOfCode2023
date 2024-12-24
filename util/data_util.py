@@ -11,6 +11,10 @@ def create_2d_list(length: int, height: int, value) -> list[list]:
     return [[value] * length for _ in range(height)]
 
 
+def create_3d_list(length: int, height: int, depth: int, value) -> list[list[list]]:
+    return [[[value] * depth for _ in range(height)] for _ in range(length)]
+
+
 T = TypeVar("T")
 
 
