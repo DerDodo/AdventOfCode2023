@@ -103,6 +103,13 @@ class Direction(Enum):
             return self.x * other, self.y * other
         raise TypeError(f"{other} is no int")
 
+    def __add__(self, other):
+        if isinstance(other, Direction):
+            return self.x * other.x, self.y * other.y
+        if isinstance(other, int):
+            return self.x * other, self.y * other
+        raise TypeError(f"{other} is no int")
+
     def __hash__(self) -> int:
         return self.hash_value
 
@@ -127,6 +134,7 @@ class Direction(Enum):
 
     def __lt__(self, other):
         return self.hash_value < other.hash_value
+
 
 NEWSDirections = [
     Direction.North,
@@ -176,14 +184,15 @@ def is_turn_left(old: Direction, new: Direction) -> bool:
             return new == Direction.SouthWest
 
 
-
 class Position:
     x: int
     y: int
+    hash_value: int
 
     def __init__(self, x: int, y: int):
         self.x = x
         self.y = y
+        self.calc_hash()
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Position):
@@ -216,6 +225,7 @@ class Position:
             self.y += other[1]
         else:
             raise TypeError(f"{other} is no Position, Direction, int, or tuple[int, int]")
+        self.calc_hash()
         return self
 
     def __sub__(self, other):
@@ -239,6 +249,7 @@ class Position:
             self.y -= other[1]
         else:
             raise TypeError(f"{other} is no Position, Direction, int, or tuple[int, int]")
+        self.calc_hash()
         return self
 
     def __mul__(self, other):
@@ -262,6 +273,7 @@ class Position:
             self.y *= other[1]
         else:
             raise TypeError(f"{other} is no Position, int, or tuple[int, int]")
+        self.calc_hash()
         return self
 
     def __floordiv__(self, other):
@@ -285,13 +297,17 @@ class Position:
             self.y //= other[1]
         else:
             raise TypeError(f"{other} is no Position, int, or tuple[int, int]")
+        self.calc_hash()
         return self
 
     def __neg__(self):
         return Position(-self.x, -self.y)
 
     def __hash__(self):
-        return self.y * 10000000 + self.x
+        return self.hash_value
+
+    def calc_hash(self):
+        self.hash_value = self.y * 10000000 + self.x
 
     def is_in_bounds(self, bounds) -> bool:
         if isinstance(bounds, Position):
@@ -318,6 +334,7 @@ class Position:
             self.y = value
         else:
             raise IndexError(f"Invalid index {index}")
+        self.calc_hash()
 
     def __mod__(self, other):
         if isinstance(other, Position):
@@ -371,6 +388,9 @@ class Area:
     def safe_check(self, position: Position, value):
         return position.is_in_bounds(self.bounds) and self[position] == value
 
+    def fast_safe_check(self, x: int, y: int, value):
+        return 0 <= x < self.bounds.x and 0 <= y < self.bounds.y and self.field[y][x] == value
+
     def __iter__(self):
         for y in range(len(self.field)):
             for x in range(len(self.field[0])):
@@ -383,7 +403,7 @@ class Area:
         if isinstance(self.field[0][0], Enum):
             return "\n".join(map(lambda line: "".join(map(lambda x: x.value, line)), self.field))
         else:
-            return "\n".join(map(lambda line: "".join(line), self.field))
+            return "\n".join(map(lambda line: "".join(map(lambda x: str(x), line)), self.field))
 
     def count(self, value) -> int:
         return sum(map(lambda line: sum([1 if x == value else 0 for x in line]), self.field))
@@ -417,3 +437,4 @@ class Area:
         for position in self:
             if self[position] == value:
                 return position
+        raise ValueError(f"Couldn't find {value} in area!")
