@@ -137,9 +137,9 @@ class Direction(Enum):
 
 
 NEWSDirections = [
-    Direction.North,
-    Direction.East,
     Direction.South,
+    Direction.East,
+    Direction.North,
     Direction.West
 ]
 

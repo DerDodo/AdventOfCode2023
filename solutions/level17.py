@@ -1,194 +1,105 @@
-import random
-from copy import deepcopy
-from enum import Enum
+import queue
+from collections.abc import Sequence
 
+from util.data_util import convert_string_list, create_2d_list
 from util.file_util import read_input_file
-
-
-class Direction(Enum):
-    UP = 0
-    RIGHT = 1
-    DOWN = 2
-    LEFT = 3
-
-
-def remove_direction(directions: list[Direction], direction: Direction):
-    if direction in directions:
-        directions.remove(direction)
+from util.math_util import Area, Direction, Position
+from util.run_util import RunTimer
 
 
 class Path:
-    field: list[list[int]]
     x: int
     y: int
-    heat_loss: int
-    history: list[Direction]
+    score: int
+    direction: Direction
+    hash_value: int
 
-    def __init__(self, field: list[list[int]], x: int, y: int, heat_loss: int, last_steps: list[Direction]):
-        self.field = field
+    def __init__(self, x: int, y: int, score: int, direction: Direction):
         self.x = x
         self.y = y
-        self.heat_loss = heat_loss
-        self.history = last_steps
+        self.score = score
+        self.direction = direction
+        self.hash_value = (y * 200 + x) * 10 + direction.hash_value
 
-    def get_random_next_step(self) -> Direction:
-        directions = list(Direction)
-        if len(self.history) >= 3 and self.history[-1] == self.history[-2] == self.history[-3]:
-            if self.history[-1] == Direction.UP or self.history[-1] == Direction.DOWN:
-                directions = [Direction.LEFT, Direction.RIGHT]
-            else:
-                directions = [Direction.UP, Direction.DOWN]
+    def __lt__(self, other) -> bool:
+        return self.score < other.score
 
-        if self.x == 0:
-            remove_direction(directions, Direction.LEFT)
-        if self.y == 0:
-            remove_direction(directions, Direction.UP)
-        if self.x == len(self.field[0]) - 1:
-            remove_direction(directions, Direction.RIGHT)
-        if self.y == len(self.field) - 1:
-            remove_direction(directions, Direction.DOWN)
-
-        if len(self.history) > 0:
-            if self.history[-1] == Direction.LEFT:
-                remove_direction(directions, Direction.RIGHT)
-            if self.history[-1] == Direction.RIGHT:
-                remove_direction(directions, Direction.LEFT)
-            if self.history[-1] == Direction.UP:
-                remove_direction(directions, Direction.DOWN)
-            if self.history[-1] == Direction.DOWN:
-                remove_direction(directions, Direction.UP)
-
-        if Direction.RIGHT in directions:
-            directions.append(Direction.RIGHT)
-            directions.append(Direction.RIGHT)
-            directions.append(Direction.RIGHT)
-        if Direction.DOWN in directions:
-            directions.append(Direction.DOWN)
-            directions.append(Direction.DOWN)
-            directions.append(Direction.DOWN)
-
-        return random.choice(directions)
-
-    def step(self, direction: Direction):
-        if direction == Direction.UP:
-            self.y -= 1
-        elif direction == Direction.LEFT:
-            self.x -= 1
-        elif direction == Direction.DOWN:
-            self.y += 1
-        else:
-            self.x += 1
-        self.heat_loss += self.field[self.y][self.x]
-        self.history.append(direction)
-
-    def get_distance_to_exit(self) -> int:
-        return (len(self.field[0]) - self.x - 1) + (len(self.field) - self.y - 1)
-
-    def is_done(self) -> bool:
-        return self.x == len(self.field[0]) - 1 and self.y == len(self.field) - 1
+    def __hash__(self) -> int:
+        return self.hash_value
 
 
-def generate_new_initial_path(field: list[list[int]], path: Path, length: int):
-    new_path = Path(field, 0, 0, 0, list())
-    for i in range(0, length):
-        new_path.step(path.history[i])
-    return new_path
+class City(Area):
+    start: Position
+    end: Position
+    min_field: Area
+
+    def __init__(self, lines: list[str]):
+        super().__init__(convert_string_list(lines, int))
+        self.start = Position(0, 0)
+        self.end = Position(self.bounds.x - 1, self.bounds.y - 1)
+        self.min_field = Area(create_2d_list(self.bounds.x, self.bounds.y, 10000))
+
+    def a_star(self, possible_steps: Sequence) -> int:
+        paths_to_follow = queue.PriorityQueue()
+        paths_to_follow.put(Path(self.start.x, self.start.y, 0, Direction.East))
+        paths_to_follow.put(Path(self.start.x, self.start.y, 0, Direction.South))
+        seen = set()
+
+        while not paths_to_follow.empty():
+            step = paths_to_follow.get()
+            if step.hash_value not in seen:
+                seen.add(step.hash_value)
+
+                if step.x == self.end.x and step.y == self.end.y:
+                    return step.score
+
+                next_steps = self._a_star_calc_next_steps(step, possible_steps)
+                for next_step in next_steps:
+                    paths_to_follow.put(next_step)
+
+        raise ValueError("Couldn't find end")
+
+    def _a_star_calc_next_steps(self, path: Path, possible_steps: Sequence) -> set[Path]:
+        next_steps = set()
+        directions = [path.direction.turn_right_90(), path.direction.turn_left_90()]
+        for direction in directions:
+            new_score = path.score
+            for distance in range(1, possible_steps[0]):
+                new_x = path.x + direction.x * distance
+                new_y = path.y + direction.y * distance
+
+                if 0 <= new_x < self.bounds.x and 0 <= new_y < self.bounds.y:
+                    new_score += self.field[path.y + direction.y * distance][path.x + direction.x * distance]
+
+            for distance in possible_steps:
+                new_x = path.x + direction.x * distance
+                new_y = path.y + direction.y * distance
+
+                if 0 <= new_x < self.bounds.x and 0 <= new_y < self.bounds.y:
+                    new_score += self.field[path.y + direction.y * distance][path.x + direction.x * distance]
+                    next_steps.add(Path(new_x, new_y, new_score, direction))
+                else:
+                    break
+        return next_steps
 
 
-def level17() -> int:
-    field = parse_input_file()
-    min_heat_loss = 10000000000000000000
-    since_last_best = 0
-    initial_path = Path(field, 0, 0, 0, list())
-    for i in range(0, 1000):
-        print(f"Attempt {i}...")
-        min_heat_loss_attempt = level17_attempt(field, initial_path)
-        since_last_best += 1
-        if min_heat_loss_attempt.heat_loss < min_heat_loss:
-            min_heat_loss = min_heat_loss_attempt.heat_loss
-            since_last_best = 0
-            print(f"Min heat loss: {min_heat_loss}")
-        if since_last_best > 150:
-            print("Aborting")
-            break
+def level17(possible_steps: Sequence) -> int:
+    city = parse_input_file()
+    min_heat_loss = city.a_star(possible_steps)
     return min_heat_loss
 
 
-def level17_attempt(field, initial_path: Path) -> Path:
-    paths = [initial_path]
-
-    min_heat_loss = 10000000000000000000
-    min_heat_loss_path = None
-    found_paths = 0
-    for _ in range(0, len(field)):
-        new_paths = []
-        for path in paths:
-            new_paths.extend(attempt_path_multiple_times(path))
-
-        done_paths = list(filter(lambda p: p.is_done(), new_paths))
-        if len(done_paths) != 0:
-            found_paths += len(done_paths)
-            new_best_heat_loss = min(map(lambda p: p.heat_loss, done_paths))
-            if new_best_heat_loss < min_heat_loss:
-                min_heat_loss = new_best_heat_loss
-                min_heat_loss_path = list(filter(lambda p: p.heat_loss == min_heat_loss, done_paths))[0]
-            if found_paths > len(field) * len(field[0]):
-                break
-        if len(done_paths) == len(new_paths):
-            break
-
-        not_done_paths = list(filter(lambda p: not p.is_done(), new_paths))
-
-        chosen_paths = []
-        chosen_paths.extend(choose_best_paths(not_done_paths, lambda p: p.heat_loss))
-        chosen_paths.extend(choose_best_paths(not_done_paths, lambda p: p.get_distance_to_exit()))
-
-        paths = chosen_paths
-
-    return min_heat_loss_path
-
-
-def parse_input_file() -> list[list[int]]:
-    lines = read_input_file(17)
-    return list(map(lambda line: list(map(int, list(line))), lines))
-
-
-def attempt_path_multiple_times(path: Path) -> list[Path]:
-    paths = []
-    if path.is_done():
-        return [path]
-
-    for _ in range(0, 50):
-        new_path = deepcopy(path)
-        for _ in range(0, int((len(path.field[0]) + len(path.field)) / 2)):
-            direction = new_path.get_random_next_step()
-            new_path.step(direction)
-            if new_path.is_done():
-                break
-        paths.append(new_path)
-
-    return paths
-
-
-def choose_best_paths(paths: list[Path], sort_mechanism) -> list[Path]:
-    paths.sort(key=sort_mechanism)
-    chosen_paths = []
-    for path in paths:
-        already_chosen = False
-        for chosen_path in chosen_paths:
-            if path.x == chosen_path.x and path.y == chosen_path.y and path.heat_loss == chosen_path.heat_loss and path.history == chosen_path.history:
-                already_chosen = True
-
-        if not already_chosen:
-            chosen_paths.append(path)
-            if len(chosen_paths) == 4:
-                return chosen_paths
-    return chosen_paths
+def parse_input_file() -> City:
+    return City(read_input_file(17))
 
 
 if __name__ == '__main__':
-    print("Final minimal heat loss: " + str(level17()))
+    timer = RunTimer()
+    print("Min heat loss (1-3): " + str(level17(range(1, 4))))
+    print("Min heat loss (4-10): " + str(level17(range(4, 11))))
+    timer.print()
 
 
 def test_level17():
-    assert 102 == level17()
+    assert level17(range(1, 4)) == 102
+    assert level17(range(4, 11)) == 94
